@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+
+  wordpress:
+    image: wordpress:6
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: admin
+      WORDPRESS_DB_PASSWORD: Zara@123
+      WORDPRESS_DB_NAME: wp
+    volumes:
+      - ./wordpress:/var/www/html
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_DATABASE: wp
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: Zara@123
+      MYSQL_ROOT_PASSWORD: Zara@123
+    volumes:
+      - db_data:/var/lib/mysql
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    command: start-dev
+    ports:
+      - "8081:8080"
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: Zara@123
+
+volumes:
+  db_data:
