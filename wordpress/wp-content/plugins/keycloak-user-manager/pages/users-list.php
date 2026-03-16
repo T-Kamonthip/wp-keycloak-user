@@ -24,6 +24,8 @@ function kc_users_list_page()
 
         echo "<td>$user->username</td>";
         echo "<td>$user->email</td>";
+        echo "<td>$user->firstName</td>";
+        echo "<td>$user->lastName</td>";
 
         echo "<td>
         <a href='admin.php?page=kc-edit-user&id=$user->id'>Edit</a>

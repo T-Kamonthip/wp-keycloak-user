@@ -36,6 +36,23 @@ function kc_get_users()
     return json_decode(wp_remote_retrieve_body($response));
 }
 
+function kc_get_users_detail($id)
+{
+
+    $token = kc_get_token();
+
+    $response = wp_remote_get(
+        "http://keycloak:8080/admin/realms/wordpress-realm/users/$id",
+        [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]
+    );
+
+    return json_decode(wp_remote_retrieve_body($response));
+}
+
 function kc_create_user($data)
 {
 
