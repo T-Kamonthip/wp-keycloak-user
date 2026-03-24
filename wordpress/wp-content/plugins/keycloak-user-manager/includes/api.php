@@ -5,17 +5,24 @@ function kc_get_token()
     $response = wp_remote_post(
         'http://keycloak:8080/realms/master/protocol/openid-connect/token',
         [
+            // 'body' => [
+            //     'client_id' => 'admin-cli',
+            //     'username' => 'admin',
+            //     'password' => 'Zara@123',
+            //     'grant_type' => 'password'
+            // ]
             'body' => [
-                'client_id' => 'admin-cli',
-                'username' => 'admin',
-                'password' => 'Zara@123',
-                'grant_type' => 'password'
+                'client_id' => 'wordpress-api',
+                'client_secret' => 'pixuR7InkKMaNHl78mU7aOBSmyCvrz5L',
+                'grant_type' => 'client_credentials'
             ]
         ]
     );
 
+    // echo '<script>console.log(' . json_encode($response) . ');</script>';
     $body = json_decode(wp_remote_retrieve_body($response));
 
+    echo '<script>console.log(' . json_encode($body) . ');</script>';
     return $body->access_token;
 }
 
@@ -23,6 +30,8 @@ function kc_get_users()
 {
 
     $token = kc_get_token();
+
+    // echo '<script>console.log(' . json_encode($token) . ');</script>';
 
     $response = wp_remote_get(
         'http://keycloak:8080/admin/realms/wordpress-realm/users',
@@ -102,5 +111,26 @@ function kc_delete_user($id)
             ]
         ]
     );
+}
+
+function kc_get_roles()
+{
+
+    $token = kc_get_token();
+
+    // echo '<script>console.log(' . json_encode($token) . ');</script>';
+
+    $response = wp_remote_get(
+        'http://keycloak:8080/admin/realms/wordpress-realm/clients/abcc4e36-5fcc-4303-8861-e330630a0718/roles',
+        [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]
+    );
+
+    echo '<script>console.log(' . json_encode($response) . ');</script>';
+
+    return json_decode(wp_remote_retrieve_body($response));
 }
 ?>

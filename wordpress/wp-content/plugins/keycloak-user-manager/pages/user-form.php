@@ -5,13 +5,19 @@ function kc_user_form_page()
     $uid = isset($_GET["id"]) ? ($_GET["id"]) :
         null;
 
-    echo $uid;
+    // echo $uid;
+
+    $dataDetail = "";
 
     if ($uid) {
-        $data = kc_get_users_detail($uid);
+        $dataDetail = kc_get_users_detail($uid);
 
-        echo "<script>console.log(" . json_encode($data) . ");</script>";
+        echo "<script>console.log(" . json_encode($dataDetail) . ");</script>";
+
+        // echo $dataDetail->username;
+
     }
+
 
     if ($_POST) {
 
@@ -44,22 +50,26 @@ function kc_user_form_page()
 
                 <tr>
                     <th>Username</th>
-                    <td><input name="username"></td>
+                    <td><input name="username"
+                            value="<?php echo isset($dataDetail->username) ? $dataDetail->username : ''; ?>"></td>
                 </tr>
 
                 <tr>
                     <th>Email</th>
-                    <td><input name="email"></td>
+                    <td><input name="email" value="<?php echo isset($dataDetail->email) ? $dataDetail->email : ''; ?>">
+                    </td>
                 </tr>
 
                 <tr>
                     <th>First Name</th>
-                    <td><input name="first_name"></td>
+                    <td><input name="first_name"
+                            value="<?php echo isset($dataDetail->firstName) ? $dataDetail->firstName : ''; ?>"></td>
                 </tr>
 
                 <tr>
                     <th>Last Name</th>
-                    <td><input name="last_name"></td>
+                    <td><input name="last_name"
+                            value="<?php echo isset($dataDetail->lastName) ? $dataDetail->lastName : ''; ?>"></td>
                 </tr>
 
             </table>

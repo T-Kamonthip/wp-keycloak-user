@@ -27,6 +27,15 @@ add_action('admin_menu', function () {
         'kc-edit-user',
         'kc_user_form_page'
     );
+
+    add_submenu_page(
+        'kc-users',
+        'Roles Management',
+        'Roles Management',
+        'manage_options',
+        'kc-roles',
+        'kc_roles_list_page'
+    );
 });
 
 ?>
