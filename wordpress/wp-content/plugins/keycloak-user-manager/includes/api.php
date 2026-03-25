@@ -23,6 +23,9 @@ function kc_get_token()
     $body = json_decode(wp_remote_retrieve_body($response));
 
     echo '<script>console.log(' . json_encode($body) . ');</script>';
+
+    echo '<script>console.log(' . json_encode(kc_decode_jwt($body->access_token)) . ');</script>';
+
     return $body->access_token;
 }
 
@@ -132,5 +135,51 @@ function kc_get_roles()
     echo '<script>console.log(' . json_encode($response) . ');</script>';
 
     return json_decode(wp_remote_retrieve_body($response));
+}
+
+
+
+// map role function
+function kc_map_role_to_wp($roles, $user_id)
+{
+    $user = new WP_User($user_id);
+
+    if (in_array('admin', $roles)) {
+        $user->set_role('administrator');
+    } elseif (in_array('editor', $roles)) {
+        $user->set_role('editor');
+    } else {
+        $user->set_role('subscriber');
+    }
+}
+
+// decode JWT (แบบง่าย)
+function kc_decode_jwt($jwt)
+{
+    $parts = explode('.', $jwt);
+    $payload = json_decode(base64_decode($parts[1]), true);
+    return $payload;
+}
+
+// hook ตอน login
+add_action('wp_login', 'kc_sync_role_after_login', 10, 2);
+
+function kc_sync_role_after_login($user_login, $user)
+{
+
+    // 🔥 ตรงนี้คุณต้องดึง token มาเอง
+    // เช่นจาก cookie / header / session
+    $jwt = $_COOKIE['kc_token'] ?? null;
+
+    if (!$jwt)
+        return;
+
+    $data = kc_decode_jwt($jwt);
+
+    if (isset($data['realm_access']['roles'])) {
+        $roles = $data['realm_access']['roles'];
+
+        kc_map_role_to_wp($roles, $user->ID);
+    }
 }
 ?>
