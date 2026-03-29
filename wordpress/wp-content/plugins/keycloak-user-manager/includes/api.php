@@ -13,7 +13,7 @@ function kc_get_token()
             // ]
             'body' => [
                 'client_id' => 'wordpress-api',
-                'client_secret' => 'pixuR7InkKMaNHl78mU7aOBSmyCvrz5L',
+                'client_secret' => 'MS20s3dQyMhv0Hv51j8GsDcM6vkuUViq',
                 'grant_type' => 'client_credentials'
             ]
         ]
