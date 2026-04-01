@@ -1,4 +1,7 @@
 <?php
+
+$realm = 'wordpress-realm';
+
 function kc_get_token()
 {
 
@@ -13,7 +16,7 @@ function kc_get_token()
             // ]
             'body' => [
                 'client_id' => 'wordpress-api',
-                'client_secret' => 'MS20s3dQyMhv0Hv51j8GsDcM6vkuUViq',
+                'client_secret' => 'pixuR7InkKMaNHl78mU7aOBSmyCvrz5L',
                 'grant_type' => 'client_credentials'
             ]
         ]
@@ -182,4 +185,43 @@ function kc_sync_role_after_login($user_login, $user)
         kc_map_role_to_wp($roles, $user->ID);
     }
 }
+
+function map_keycloak_role_to_wp($user_id, $token_roles)
+{
+    $user = new WP_User($user_id);
+
+    // reset role ก่อน (สำคัญ)
+    $user->set_role('');
+
+    if (in_array('admin', $token_roles)) {
+        $user->add_role('administrator');
+    } elseif (in_array('editor', $token_roles)) {
+        $user->add_role('editor');
+    } else {
+        $user->add_role('subscriber');
+    }
+}
+
+// add role
+function assign_role_keycloak($user_id, $role_name)
+{
+    $token = kc_get_token();
+
+    $url = "http://localhost:8081/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
+
+    $data = [
+        [
+            "name" => $role_name
+        ]
+    ];
+
+    wp_remote_post($url, [
+        'headers' => [
+            'Authorization' => "Bearer $token",
+            'Content-Type' => 'application/json'
+        ],
+        'body' => json_encode($data)
+    ]);
+}
+
 ?>
