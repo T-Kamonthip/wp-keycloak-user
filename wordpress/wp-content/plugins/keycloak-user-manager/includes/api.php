@@ -1,22 +1,15 @@
 <?php
 
-$realm = 'wordpress-realm';
-
 function kc_get_token()
 {
 
     $response = wp_remote_post(
         'http://keycloak:8080/realms/master/protocol/openid-connect/token',
         [
-            // 'body' => [
-            //     'client_id' => 'admin-cli',
-            //     'username' => 'admin',
-            //     'password' => 'Zara@123',
-            //     'grant_type' => 'password'
-            // ]
+
             'body' => [
                 'client_id' => 'wordpress-api',
-                'client_secret' => 'pixuR7InkKMaNHl78mU7aOBSmyCvrz5L',
+                'client_secret' => '4HfIHs7AosAZEs77ChUHR2VXj7qPgMp4',
                 'grant_type' => 'client_credentials'
             ]
         ]
@@ -25,9 +18,9 @@ function kc_get_token()
     // echo '<script>console.log(' . json_encode($response) . ');</script>';
     $body = json_decode(wp_remote_retrieve_body($response));
 
-    echo '<script>console.log(' . json_encode($body) . ');</script>';
+    // echo '<script>console.log(' . json_encode($body) . ');</script>';
 
-    echo '<script>console.log(' . json_encode(kc_decode_jwt($body->access_token)) . ');</script>';
+    // echo '<script>console.log(' . json_encode(kc_decode_jwt($body->access_token)) . ');</script>';
 
     return $body->access_token;
 }
@@ -37,7 +30,7 @@ function kc_get_users()
 
     $token = kc_get_token();
 
-    // echo '<script>console.log(' . json_encode($token) . ');</script>';
+    // echo '<script>console.log("Token: ' . $token . '");</script>';
 
     $response = wp_remote_get(
         'http://keycloak:8080/admin/realms/wordpress-realm/users',
@@ -47,6 +40,8 @@ function kc_get_users()
             ]
         ]
     );
+
+    // echo '<script>console.log("Response: ' . json_encode($response) . '");</script>';
 
     return json_decode(wp_remote_retrieve_body($response));
 }
@@ -73,7 +68,7 @@ function kc_create_user($data)
 
     $token = kc_get_token();
 
-    wp_remote_post(
+    $response = wp_remote_post(
         'http://keycloak:8080/admin/realms/wordpress-realm/users',
         [
             'headers' => [
@@ -83,6 +78,15 @@ function kc_create_user($data)
             'body' => json_encode($data)
         ]
     );
+
+    $headers = wp_remote_retrieve_headers($response);
+    $location = $headers['location'];
+
+    // extract userId จาก URL
+    preg_match('/\/([^\/]+)$/', $location, $matches);
+    $userId = $matches[1];
+
+    echo '<script>console.log("Created User ID: ' . $userId . '");</script>';
 }
 
 function kc_update_user($id, $data)
@@ -207,7 +211,7 @@ function assign_role_keycloak($user_id, $role_name)
 {
     $token = kc_get_token();
 
-    $url = "http://localhost:8081/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
+    $url = "http://keycloak:8081/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
 
     $data = [
         [
