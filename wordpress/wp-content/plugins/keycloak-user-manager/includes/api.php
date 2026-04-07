@@ -9,7 +9,7 @@ function kc_get_token()
 
             'body' => [
                 'client_id' => 'wordpress-api',
-                'client_secret' => '4HfIHs7AosAZEs77ChUHR2VXj7qPgMp4',
+                'client_secret' => 'pixuR7InkKMaNHl78mU7aOBSmyCvrz5L',
                 'grant_type' => 'client_credentials'
             ]
         ]
@@ -60,7 +60,17 @@ function kc_get_users_detail($id)
         ]
     );
 
-    return json_decode(wp_remote_retrieve_body($response));
+    // echo '<script>console.log(' . json_encode("User Detail Response: " . json_encode($response)) . ');</script>';
+
+    kc_get_user_realm_roles($id); // ดึง role มาแสดงใน console
+
+    // echo '<script>console.log(' . json_encode("User Roles: " . json_encode(kc_get_user_realm_roles($id))) . ');</script>';
+
+    $userDetail = json_decode(wp_remote_retrieve_body($response));
+
+    $userDetail->roles = kc_get_user_realm_roles($id)[0]->name; // เพิ่ม roles ลงใน user detail
+
+    return $userDetail;
 }
 
 function kc_create_user($data)
@@ -86,7 +96,14 @@ function kc_create_user($data)
     preg_match('/\/([^\/]+)$/', $location, $matches);
     $userId = $matches[1];
 
-    echo '<script>console.log("Created User ID: ' . $userId . '");</script>';
+    // echo '<script>console.log("Created User ID: ' . $userId . '");</script>';
+
+    $role = get_role_by_name('user'); // สมมติเราต้องการกำหนด role 'user'
+
+    if ($role) {
+        assign_role_keycloak($userId, $role); // กำหนด role หลังสร้าง user
+    }
+
 }
 
 function kc_update_user($id, $data)
@@ -105,6 +122,46 @@ function kc_update_user($id, $data)
             'body' => json_encode($data)
         ]
     );
+
+    echo '<script>console.log(' . json_encode($data) . ');</script>';
+    if (isset($data['roles'])) {
+        kc_remove_all_realm_roles($id); // ลบ role เดิมก่อน
+
+        $role = get_role_by_name($data['roles']);
+        if ($role) {
+            assign_role_keycloak($id, $role);
+        }
+    }
+}
+
+function kc_remove_all_realm_roles($user_id)
+{
+    $token = kc_get_token();
+
+    $roles = kc_get_user_realm_roles($user_id);
+
+    if (empty($roles))
+        return;
+
+    $url = "http://keycloak:8080/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
+
+    $data = [];
+
+    foreach ($roles as $role) {
+        $data[] = [
+            "id" => $role->id,
+            "name" => $role->name
+        ];
+    }
+
+    wp_remote_request($url, [
+        'method' => 'DELETE',
+        'headers' => [
+            'Authorization' => "Bearer $token",
+            'Content-Type' => 'application/json'
+        ],
+        'body' => json_encode($data)
+    ]);
 }
 
 function kc_delete_user($id)
@@ -123,6 +180,27 @@ function kc_delete_user($id)
     );
 }
 
+function kc_get_user_realm_roles($user_id)
+{
+    $token = kc_get_token();
+
+    $response = wp_remote_get(
+        "http://keycloak:8080/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm",
+        [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]
+    );
+
+    if (is_wp_error($response)) {
+        error_log($response->get_error_message());
+        return [];
+    }
+
+    return json_decode(wp_remote_retrieve_body($response));
+}
+
 function kc_get_roles()
 {
 
@@ -131,7 +209,7 @@ function kc_get_roles()
     // echo '<script>console.log(' . json_encode($token) . ');</script>';
 
     $response = wp_remote_get(
-        'http://keycloak:8080/admin/realms/wordpress-realm/clients/abcc4e36-5fcc-4303-8861-e330630a0718/roles',
+        'http://keycloak:8080/admin/realms/wordpress-realm/roles',
         [
             'headers' => [
                 'Authorization' => 'Bearer ' . $token
@@ -144,7 +222,18 @@ function kc_get_roles()
     return json_decode(wp_remote_retrieve_body($response));
 }
 
+function get_role_by_name($role_name)
+{
+    $roles = kc_get_roles();
 
+    foreach ($roles as $role) {
+        if ($role->name === $role_name) {
+            return $role;
+        }
+    }
+
+    return null;
+}
 
 // map role function
 function kc_map_role_to_wp($roles, $user_id)
@@ -207,15 +296,18 @@ function map_keycloak_role_to_wp($user_id, $token_roles)
 }
 
 // add role
-function assign_role_keycloak($user_id, $role_name)
+function assign_role_keycloak($user_id, $role)
 {
     $token = kc_get_token();
 
-    $url = "http://keycloak:8081/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
+    $url = "http://keycloak:8080/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
+
+    echo '<script>console.log("Assigning Role: ' . $role->id . ' to User ID: ' . $user_id . '");</script>';
 
     $data = [
         [
-            "name" => $role_name
+            "id" => $role->id,
+            "name" => $role->name,
         ]
     ];
 

@@ -9,12 +9,16 @@ function kc_user_form_page()
 
     $dataDetail = "";
 
+    $roles = ['admin', 'editor', 'user'];
+    $selected_role = '';
+
     if ($uid) {
         $dataDetail = kc_get_users_detail($uid);
 
         echo "<script>console.log(" . json_encode($dataDetail) . ");</script>";
 
         // echo $dataDetail->username;
+        $selected_role = $dataDetail->roles ?? '';
 
     }
 
@@ -26,7 +30,8 @@ function kc_user_form_page()
             "email" => $_POST['email'],
             "enabled" => true,
             "firstName" => $_POST['first_name'],
-            "lastName" => $_POST['last_name']
+            "lastName" => $_POST['last_name'],
+            "roles" => $_POST['role'] ?? ''
         ];
 
         if ($_GET['id']) {
@@ -70,6 +75,18 @@ function kc_user_form_page()
                     <th>Last Name</th>
                     <td><input name="last_name"
                             value="<?php echo isset($dataDetail->lastName) ? $dataDetail->lastName : ''; ?>"></td>
+                </tr>
+
+                <tr>
+                    <th>Role</th>
+                    <td>
+                        <?php foreach ($roles as $role): ?>
+                            <label>
+                                <input type="radio" name="role" value="<?php echo $role; ?>" <?php checked($selected_role, $role); ?>>
+                                <?php echo ucfirst($role); ?>
+                            </label><br>
+                        <?php endforeach; ?>
+                    </td>
                 </tr>
 
             </table>
