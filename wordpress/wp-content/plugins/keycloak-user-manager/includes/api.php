@@ -78,6 +78,14 @@ function kc_create_user($data)
 
     $token = kc_get_token();
 
+    $dataBody = [
+        "username" => $data['username'],
+        "email" => $data['email'],
+        "enabled" => true,
+        "firstName" => $data['firstName'],
+        "lastName" => $data['lastName']
+    ];
+
     $response = wp_remote_post(
         'http://keycloak:8080/admin/realms/wordpress-realm/users',
         [
@@ -85,7 +93,7 @@ function kc_create_user($data)
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json'
             ],
-            'body' => json_encode($data)
+            'body' => json_encode($dataBody)
         ]
     );
 
@@ -98,7 +106,7 @@ function kc_create_user($data)
 
     // echo '<script>console.log("Created User ID: ' . $userId . '");</script>';
 
-    $role = get_role_by_name('user'); // สมมติเราต้องการกำหนด role 'user'
+    $role = get_role_by_name($data['roles']); // สมมติเราต้องการกำหนด role 'user'
 
     if ($role) {
         assign_role_keycloak($userId, $role); // กำหนด role หลังสร้าง user
@@ -111,7 +119,17 @@ function kc_update_user($id, $data)
 
     $token = kc_get_token();
 
-    wp_remote_request(
+    $dataBody = [
+        "username" => $data['username'],
+        "email" => $data['email'],
+        "enabled" => true,
+        "firstName" => $data['firstName'],
+        "lastName" => $data['lastName']
+    ];
+
+    echo '<script>console.log(' . json_encode("User Data: " . json_encode($dataBody)) . ');</script>';
+
+    $response = wp_remote_request(
         "http://keycloak:8080/admin/realms/wordpress-realm/users/$id",
         [
             'method' => 'PUT',
@@ -119,11 +137,25 @@ function kc_update_user($id, $data)
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json'
             ],
-            'body' => json_encode($data)
+            'body' => json_encode($dataBody)
         ]
     );
 
-    echo '<script>console.log(' . json_encode($data) . ');</script>';
+    // debug
+    $status = wp_remote_retrieve_response_code($response);
+    $body = wp_remote_retrieve_body($response);
+
+    echo '<script>console.log("Status: ' . $status . '");</script>';
+    echo '<script>console.log("Response: ' . $body . '");</script>';
+
+    // $headers = wp_remote_retrieve_headers($response);
+    // $location = $headers['location'];
+
+    // // extract userId จาก URL
+    // preg_match('/\/([^\/]+)$/', $location, $matches);
+    // $userId = $matches[1];
+
+    // echo '<script>console.log(' . json_encode($data) . ');</script>';
     if (isset($data['roles'])) {
         kc_remove_all_realm_roles($id); // ลบ role เดิมก่อน
 
@@ -217,7 +249,7 @@ function kc_get_roles()
         ]
     );
 
-    echo '<script>console.log(' . json_encode($response) . ');</script>';
+    // echo '<script>console.log(' . json_encode($response) . ');</script>';
 
     return json_decode(wp_remote_retrieve_body($response));
 }
@@ -302,7 +334,7 @@ function assign_role_keycloak($user_id, $role)
 
     $url = "http://keycloak:8080/admin/realms/wordpress-realm/users/$user_id/role-mappings/realm";
 
-    echo '<script>console.log("Assigning Role: ' . $role->id . ' to User ID: ' . $user_id . '");</script>';
+    // echo '<script>console.log("Assigning Role: ' . $role->id . ' to User ID: ' . $user_id . '");</script>';
 
     $data = [
         [

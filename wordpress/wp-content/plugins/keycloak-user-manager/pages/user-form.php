@@ -15,7 +15,7 @@ function kc_user_form_page()
     if ($uid) {
         $dataDetail = kc_get_users_detail($uid);
 
-        echo "<script>console.log(" . json_encode($dataDetail) . ");</script>";
+        // echo "<script>console.log(" . json_encode($dataDetail) . ");</script>";
 
         // echo $dataDetail->username;
         $selected_role = $dataDetail->roles ?? '';

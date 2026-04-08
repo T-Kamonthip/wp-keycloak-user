@@ -15,6 +15,8 @@ function kc_users_list_page()
     echo "<tr>
             <th>Username</th>
             <th>Email</th>
+            <th>First Name</th>
+            <th>Last Name</th>
             <th>Action</th>
           </tr>";
 
@@ -29,6 +31,7 @@ function kc_users_list_page()
 
         echo "<td>
         <a href='admin.php?page=kc-edit-user&id=$user->id'>Edit</a>
+        <a href='admin.php?page=kc-delete-user&id=$user->id' onclick='return confirm(\"Are you sure you want to delete this user?\");'>Delete</a>
         </td>";
 
         echo "</tr>";
